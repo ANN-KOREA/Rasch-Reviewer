@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rasch 리뷰 동반자 웹앱</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 960px;
+      margin: auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    label, input, select, textarea {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.6rem 1.2rem;
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-right: 0.5rem;
+    }
+    button:hover {
+      background-color: #145ca4;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 2rem;
+    }
+    .entry-block {
+      border-top: 1px solid #ccc;
+      margin-top: 1rem;
+      padding-top: 1rem;
+    }
+    pre {
+      background: #f0f0f0;
+      padding: 1rem;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body onload="loadEntries()">
+  <div class="container">
+    <h1>Rasch 리뷰 동반자</h1>
+    <p>항목명과 점수를 입력하고 GPT 분석 링크로 이동해보세요.</p>
+
+    <form id="inputForm">
+      <label for="item">항목명 (예: 발표 준비)</label>
+      <input type="text" id="item" name="item" placeholder="예: 발표 준비">
+
+      <label for="score">점수 (1~5, 숫자 또는 한글 가능)</label>
+      <input type="text" id="score" name="score" placeholder="예: 3 또는 삼">
+
+      <button type="button" onclick="addEntry()">입력 추가</button>
+      <button type="button" onclick="clearEntries()">입력 초기화</button>
+    </form>
+
+    <div class="entry-block">
+      <h2>입력 목록 (저장됨)</h2>
+      <ul id="entryList"></ul>
+    </div>
+
+    <div class="entry-block">
+      <h2>HTML 결과 출력</h2>
+      <button onclick="generateHTML()">결과 HTML 코드 보기</button>
+      <pre id="resultHTML"></pre>
+    </div>
+
+    <iframe src="https://chatgpt.com/g/g-682df39853848191896681f137f64e88-rasch-ribyu-dongbanja" title="Rasch 리뷰 동반자"></iframe>
+  </div>
+
+  <script>
+    const entryList = document.getElementById('entryList');
+    const resultHTML = document.getElementById('resultHTML');
+    let entries = [];
+
+    function normalizeScore(score) {
+      const map = {'하나':1, '둘':2, '셋':3, '넷':4, '다섯':5, '일':1, '이':2, '삼':3, '사':4, '오':5};
+      return isNaN(score) ? (map[score.trim()] || score) : score;
+    }
+
+    function getCurrentDateTime() {
+      const now = new Date();
+      return now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+    }
+
+    function addEntry() {
+      const item = document.getElementById('item').value.trim();
+      const rawScore = document.getElementById('score').value.trim();
+      const score = normalizeScore(rawScore);
+
+      if (item && score >= 1 && score <= 5) {
+        const datetime = getCurrentDateTime();
+        const entry = { item, score, datetime };
+        entries.push(entry);
+        localStorage.setItem('raschEntries', JSON.stringify(entries));
+        renderEntries();
+        document.getElementById('inputForm').reset();
+      } else {
+        alert('올바른 항목명과 점수(1~5)를 입력해주세요.');
+      }
+    }
+
+    function renderEntries() {
+      entryList.innerHTML = '';
+      entries.forEach(e => {
+        const li = document.createElement('li');
+        li.textContent = `${e.datetime} - ${e.item} : ${e.score}`;
+        entryList.appendChild(li);
+      });
+    }
+
+    function clearEntries() {
+      entries = [];
+      localStorage.removeItem('raschEntries');
+      renderEntries();
+    }
+
+    function loadEntries() {
+      const saved = localStorage.getItem('raschEntries');
+      if (saved) {
+        entries = JSON.parse(saved);
+        renderEntries();
+      }
+    }
+
+    function generateHTML() {
+      let html = '<ul>';
+      entries.forEach(e => {
+        html += `<li>${e.datetime} - ${e.item}: ${e.score}</li>`;
+      });
+      html += '</ul>';
+      resultHTML.textContent = html;
+    }
+  </script>
+</body>
+</html>
